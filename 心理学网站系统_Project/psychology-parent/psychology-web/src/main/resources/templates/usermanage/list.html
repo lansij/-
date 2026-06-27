@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>用户管理</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+</head>
+<body>
+<div style="padding: 20px;">
+    <div class="layui-form-item" style="margin-bottom: 15px;">
+        <div class="layui-inline">
+            <input type="text" id="keyword" placeholder="搜索用户名/昵称" autocomplete="off" class="layui-input">
+        </div>
+        <div class="layui-inline">
+            <button class="layui-btn" id="searchBtn">搜索</button>
+            <button class="layui-btn layui-btn-danger" id="batchDelBtn">批量删除</button>
+        </div>
+    </div>
+    <table id="dataTable" lay-filter="dataTable"></table>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+    layui.use(['table', 'layer'], function(){
+        var table = layui.table;
+        var layer = layui.layer;
+        var $ = layui.$;
+
+        table.render({
+            elem: '#dataTable',
+            url: '/usermanage/getPage',
+            method: 'post',
+            page: true,
+            limits: [5, 10, 20, 30],
+            limit: 10,
+            cols: [[
+                {type: 'checkbox'},
+                {field: 'id', title: 'ID', width: 80},
+                {field: 'nickname', title: '昵称'},
+                {field: 'username', title: '用户名'},
+                {field: 'password', title: '密码'},
+                {field: 'phone', title: '手机号'},
+                {field: 'email', title: '邮箱'},
+                {field: 'role', title: '角色', width: 100, templet: function(d){ return d.role === 'ADMIN' ? '管理员' : '普通用户'; }},
+                {field: 'status', title: '状态', width: 80, templet: function(d){ return d.status == 1 ? '正常' : '禁用'; }},
+                {title: '操作', width: 120, toolbar: '#operateTpl'}
+            ]],
+            request: { pageName: 'page', limitName: 'limit' },
+            parseData: function(res){
+                return { code: res.code, msg: res.msg, count: res.count, data: res.data };
+            }
+        });
+
+        table.on('tool(dataTable)', function(obj){
+            if(obj.event === 'del'){
+                layer.confirm('确定删除？', function(index){
+                    $.post('/usermanage/doDel/' + obj.data.id, function(res){
+                        if(res.code == 0){
+                            layer.msg('删除成功');
+                            table.reload('dataTable');
+                        } else {
+                            layer.msg('删除失败');
+                        }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+
+        $('#searchBtn').on('click', function(){
+            table.reload('dataTable', { where: { keyword: $('#keyword').val() }, page: { curr: 1 } });
+        });
+
+        $('#batchDelBtn').on('click', function(){
+            var checkStatus = table.checkStatus('dataTable');
+            if(checkStatus.data.length == 0){
+                layer.msg('请选择要删除的数据');
+                return;
+            }
+            layer.confirm('确定删除选中的数据？', function(index){
+                var ids = [];
+                checkStatus.data.forEach(function(item){ ids.push(item.id); });
+                $.post('/usermanage/batchDel', {ids: ids}, function(res){
+                    if(res.code == 0){
+                        layer.msg('删除成功');
+                        table.reload('dataTable');
+                    }
+                });
+                layer.close(index);
+            });
+        });
+    });
+</script>
+<script th:inline="none" type="text/html" id="operateTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>心理学网站后台管理系统</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+    <link rel="stylesheet" th:href="@{/layuiadmin/style/admin.css}" media="all">
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!--头部-->
+    <div th:replace="~{contentTop :: top}"></div>
+    <!--左侧菜单-->
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll">
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <li class="layui-nav-item layui-nav-itemed" th:each="menu:${userMenuList}">
+                    <a href="javascript:;">[[${menu.title}]]</a>
+                    <dl class="layui-nav-child" th:if="${menu.childMenuList!=null}">
+                        <dd th:each="child:${menu.childMenuList}">
+                            <a th:href="${child.href}" th:attr="target=${child.child?'right':''}">[[${child.title}]]</a>
+                        </dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!--主体-->
+    <div class="layui-body">
+        <div th:replace="~{contentTag :: tag}"></div>
+    </div>
+    <!--底部-->
+    <div class="layui-footer">
+        © 2026 心理学网站后台管理系统
+    </div>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+    layui.use(['element'], function(){
+        var element = layui.element;
+    });
+</script>
+</body>
+</html>

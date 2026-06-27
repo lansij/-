@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>文章详情</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+    <link rel="stylesheet" th:href="@{/css/detail-common.css}" media="all">
+</head>
+<body>
+
+<div th:replace="~{userMenu/fragments/header :: header}"></div>
+
+<div class="container">
+    <div class="article-box">
+        <h2 class="article-title" id="title"></h2>
+        <div class="article-meta">
+            <span>📝 作者：<em id="author"></em></span>
+            <span>👁️ 浏览：<em id="viewCount"></em></span>
+            <span>📅 时间：<em id="createTime"></em></span>
+        </div>
+        <img class="article-cover" id="cover" style="display:none;">
+        <div class="article-content" id="content"></div>
+        <div class="action-bar">
+            <button class="fav-btn" id="favBtn" onclick="toggleFavorite()">☆ 收藏</button>
+            <a class="back-btn" href="/toUserIndex">← 返回列表</a>
+        </div>
+    </div>
+
+    <div class="comment-section">
+        <h3>💬 评论</h3>
+        <div class="comment-input">
+            <textarea id="commentContent" placeholder="说说你的看法..."></textarea>
+            <button class="submit-btn" onclick="submitComment()">发表</button>
+        </div>
+        <div class="comment-list" id="commentList"></div>
+    </div>
+</div>
+
+<script th:inline="none" th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none" th:src="@{/js/detail-common.js}"></script>
+<script th:inline="none">
+var currentId = window.location.pathname.split('/').pop();
+var targetType = 'ARTICLE';
+
+layui.use(['layer'], function() {
+    var $ = layui.$;
+    $.post('/article/getArticleById/' + currentId, function(res) {
+        if (res) {
+            document.getElementById('title').textContent = res.title || '';
+            document.getElementById('author').textContent = res.author || '未知';
+            document.getElementById('viewCount').textContent = res.viewCount || 0;
+            document.getElementById('createTime').textContent = res.createTime ? res.createTime.substring(0, 10) : '';
+            if (res.cover) {
+                var coverEl = document.getElementById('cover');
+                coverEl.src = res.cover;
+                coverEl.style.display = 'block';
+            }
+            document.getElementById('content').innerHTML = renderContent(res.content);
+        }
+    });
+    loadComments();
+    checkFavorite();
+});
+</script>
+</body>
+</html>

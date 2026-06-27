@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><title>评论管理</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+    <link rel="stylesheet" th:href="@{/layuiadmin/style/admin.css}" media="all">
+</head>
+<body>
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-form layui-card-header layuiadmin-card-header-auto">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">目标类型</label>
+                    <div class="layui-input-block">
+                        <select lay-filter="targetType" id="searchTargetType">
+                            <option value="">全部</option>
+                            <option value="文章">文章</option>
+                            <option value="书籍">书籍</option>
+                            <option value="新闻">新闻</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">评论内容</label>
+                    <div class="layui-input-inline">
+                        <input type="text" id="searchContent" placeholder="请输入关键词" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn layuiadmin-btn-list" lay-submit lay-filter="searchBtn">
+                        <i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="layui-card-body layui-form">
+            <table id="dataTable" lay-filter="dataTable"></table>
+            <script type="text/html" id="toolbarDemo">
+                <div class="layui-btn-container">
+                    <button class="layui-btn layui-btn-danger layui-btn-sm" lay-event="batchDel"><i class="layui-icon layui-icon-delete"></i> 批量删除</button>
+                </div>
+            </script>
+            <script type="text/html" id="operateTpl">
+                <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i class="layui-icon layui-icon-delete"></i> 删除</a>
+            </script>
+        </div>
+    </div>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+    layui.use(['table', 'layer', 'form'], function(){
+        var table = layui.table; var layer = layui.layer; var form = layui.form; var $ = layui.$;
+        table.render({
+            elem: '#dataTable', url: '/comment/getPage', method: 'post', page: true,
+            toolbar: '#toolbarDemo',
+            cellMinWidth: 80,
+            defaultToolbar: ['filter', 'exports', 'print'],
+            limits: [10, 20, 30, 50],
+            limit: 10,
+            layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip'],
+            cols: [[
+                {type: 'checkbox'},
+                {field: 'id', title: 'ID', width: 80, sort: true},
+                {field: 'nickname', title: '评论用户', width: 120},
+                {field: 'targetType', title: '目标类型', width: 100},
+                {field: 'targetId', title: '目标ID', width: 100},
+                {field: 'content', title: '评论内容', minWidth: 200},
+                {field: 'createTime', title: '评论时间', width: 180},
+                {title: '操作', width: 100, fixed: 'right', toolbar: '#operateTpl'}
+            ]],
+            request: { pageName: 'page', limitName: 'limit' },
+            parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+        });
+        table.on('toolbar(dataTable)', function(obj){
+            if(obj.event === 'batchDel'){
+                var checkStatus = table.checkStatus('dataTable');
+                if(checkStatus.data.length == 0){ layer.msg('请选择要删除的数据'); return; }
+                layer.confirm('确定删除选中的数据？', function(index){
+                    var ids = [];
+                    checkStatus.data.forEach(function(item){ ids.push(item.id); });
+                    $.post('/comment/batchDel', {ids: ids}, function(res){
+                        if(res.code == 0){ layer.msg('删除成功'); table.reload('dataTable'); }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+        table.on('tool(dataTable)', function(obj){
+            if(obj.event === 'del'){
+                layer.confirm('确定删除？', function(index){
+                    $.post('/comment/doDel/' + obj.data.id, function(res){
+                        if(res.code == 0){ layer.msg('删除成功'); table.reload('dataTable'); }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+        form.on('submit(searchBtn)', function(){
+            table.reload('dataTable', {
+                where: { targetType: $('#searchTargetType').val(), content: $('#searchContent').val() },
+                page: { curr: 1 }
+            });
+        });
+    });
+</script>
+</body>
+</html>

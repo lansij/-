@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><title>新增文章</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+</head>
+<body>
+<div style="padding: 20px 30px 0 0;">
+    <form class="layui-form" lay-filter="addForm">
+        <div class="layui-form-item"><label class="layui-form-label">标题</label><div class="layui-input-inline"><input type="text" name="title" lay-verify="required" placeholder="请输入标题" autocomplete="off" class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">作者</label><div class="layui-input-inline"><input type="text" name="author" placeholder="请输入作者" autocomplete="off" class="layui-input"></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">摘要</label><div class="layui-input-block"><textarea name="summary" placeholder="请输入摘要" class="layui-textarea"></textarea></div></div>
+        <div class="layui-form-item"><label class="layui-form-label">内容</label><div class="layui-input-block"><textarea name="content" placeholder="请输入内容" class="layui-textarea" style="height:150px;"></textarea></div></div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">封面图</label>
+            <div class="layui-input-inline" style="width:300px;">
+                <input type="text" id="coverUrl" name="cover" placeholder="图片URL或上传后自动填充" autocomplete="off" class="layui-input">
+            </div>
+            <div class="layui-input-inline">
+                <button type="button" class="layui-btn layui-btn-normal" id="uploadBtn"><i class="layui-icon layui-icon-upload"></i>上传图片</button>
+            </div>
+            <div class="layui-input-inline" id="preview" style="line-height:38px;"></div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="submit">添加</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="cancelBtn">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+layui.use(['form', 'layer', 'upload'], function(){
+    var form = layui.form, layer = layui.layer, upload = layui.upload, $ = layui.$;
+
+    upload.render({
+        elem: '#uploadBtn',
+        url: '/upload',
+        field: 'file',
+        done: function(res){
+            if(res.code == 0){
+                $('#coverUrl').val(res.data);
+                $('#preview').html('<img src="' + res.data + '" style="max-height:80px;">');
+                layer.msg('上传成功', {icon: 1});
+            } else {
+                layer.msg('上传失败', {icon: 2});
+            }
+        }
+    });
+
+    form.on('submit(submit)', function(data){
+        $.post('/article/doAdd', data.field, function(res){
+            if(res.code == 0){
+                layer.msg('添加成功', {icon: 1, time: 1000}, function(){
+                    var index = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(index);
+                });
+            } else {
+                layer.msg('添加失败', {icon: 2});
+            }
+        });
+        return false;
+    });
+
+    $('#cancelBtn').on('click', function(){
+        var index = parent.layer.getFrameIndex(window.name);
+        parent.layer.close(index);
+    });
+});
+</script>
+</body>
+</html>

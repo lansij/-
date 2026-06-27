@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <title>用户中心</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f5f5f5; font-family: "Microsoft YaHei", sans-serif; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 14px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
+        .header .inner { max-width: 1000px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 18px; font-weight: 500; }
+        .header a { color: #fff; font-size: 14px; text-decoration: none; opacity: 0.85; }
+        .header a:hover { opacity: 1; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .center-box { background: #fff; border-radius: 8px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); overflow: hidden; }
+        .center-tabs { display: flex; border-bottom: 2px solid #eee; }
+        .center-tabs .tab-item { flex: 1; text-align: center; padding: 16px 0; font-size: 15px; color: #666; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; }
+        .center-tabs .tab-item:hover { color: #667eea; }
+        .center-tabs .tab-item.active { color: #667eea; border-bottom-color: #667eea; font-weight: 500; }
+        .tab-content { padding: 25px; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* 个人信息表单 */
+        .profile-form .form-row { display: flex; align-items: center; margin-bottom: 18px; }
+        .profile-form .form-label { width: 80px; font-size: 14px; color: #333; text-align: right; padding-right: 15px; }
+        .profile-form .form-input { flex: 1; max-width: 400px; }
+        .profile-form .form-input input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .profile-form .form-input input:focus { outline: none; border-color: #667eea; }
+        .profile-form .form-input input[readonly] { background: #f5f5f5; color: #999; }
+        .profile-form .form-actions { padding-left: 80px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="inner">
+        <h1>🌿 用户中心</h1>
+        <a href="/toUserIndex">← 返回首页</a>
+    </div>
+</div>
+
+<div class="container">
+    <div class="center-box">
+        <div class="center-tabs">
+            <div class="tab-item active" onclick="switchTab(0)">👤 个人中心</div>
+            <div class="tab-item" onclick="switchTab(1)">💬 我的评论</div>
+            <div class="tab-item" onclick="switchTab(2)">📖 文章收藏</div>
+            <div class="tab-item" onclick="switchTab(3)">📚 书籍收藏</div>
+            <div class="tab-item" onclick="switchTab(4)">📢 活动收藏</div>
+        </div>
+        <div class="tab-content">
+            <!-- 个人信息 -->
+            <div class="tab-panel active" id="panel-profile">
+                <form class="layui-form profile-form" id="profileForm">
+                    <div class="form-row">
+                        <span class="form-label">用户名</span>
+                        <div class="form-input">
+                            <input type="text" name="username" th:value="${session.user?.username}" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">昵称</span>
+                        <div class="form-input">
+                            <input type="text" name="nickname" th:value="${session.user?.nickname}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">邮箱</span>
+                        <div class="form-input">
+                            <input type="text" name="email" th:value="${session.user?.email}">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">手机号</span>
+                        <div class="form-input">
+                            <input type="text" name="phone" th:value="${session.user?.phone}">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="layui-btn" lay-submit lay-filter="updateProfile">保存修改</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 我的评论 -->
+            <div class="tab-panel" id="panel-comment">
+                <table id="commentTable" lay-filter="commentTable"></table>
+            </div>
+
+            <!-- 文章收藏 -->
+            <div class="tab-panel" id="panel-article-fav">
+                <table id="articleFavTable" lay-filter="articleFavTable"></table>
+            </div>
+
+            <!-- 书籍收藏 -->
+            <div class="tab-panel" id="panel-book-fav">
+                <table id="bookFavTable" lay-filter="bookFavTable"></table>
+            </div>
+
+            <!-- 活动收藏 -->
+            <div class="tab-panel" id="panel-announcement-fav">
+                <table id="announcementFavTable" lay-filter="announcementFavTable"></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+// Tab 切换
+function switchTab(index) {
+    var tabs = document.querySelectorAll('.tab-item');
+    var panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(function(t){ t.classList.remove('active'); });
+    panels.forEach(function(p){ p.classList.remove('active'); });
+    tabs[index].classList.add('active');
+    panels[index].classList.add('active');
+}
+
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    // 我的评论
+    table.render({
+        elem: '#commentTable', url: '/comment/getMyComments', method: 'post', page: true,
+        limits: [5, 10, 20], limit: 10,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80},
+            {field: 'targetType', title: '目标类型', width: 100},
+            {field: 'targetId', title: '目标ID', width: 100},
+            {field: 'content', title: '评论内容'},
+            {field: 'createTime', title: '评论时间', width: 170, templet: function(d){
+                return d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : '';
+            }},
+            {title: '操作', width: 100, toolbar: '#commentTpl'}
+        ]],
+        request: { pageName: 'page', limitName: 'limit' },
+        parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+    });
+
+    table.on('tool(commentTable)', function(obj){
+        if(obj.event === 'del'){
+            layer.confirm('确定删除这条评论？', function(index){
+                $.post('/comment/doDel/' + obj.data.id, function(res){
+                    if(res.code == 0){ layer.msg('删除成功', {icon: 1}); table.reload('commentTable'); }
+                });
+                layer.close(index);
+            });
+        }
+    });
+
+    // 文章收藏
+    table.render({
+        elem: '#articleFavTable', url: '/favorite/getMyArticleFavorites', method: 'post', page: true,
+        limits: [5, 10, 20], limit: 10,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80},
+            {field: 'title', title: '文章标题'},
+            {field: 'author', title: '作者', width: 120},
+            {field: 'createTime', title: '收藏时间', width: 170, templet: function(d){
+                return d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : '';
+            }},
+            {title: '操作', width: 120, toolbar: '#articleFavTpl'}
+        ]],
+        request: { pageName: 'page', limitName: 'limit' },
+        parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+    });
+
+    table.on('tool(articleFavTable)', function(obj){
+        if(obj.event === 'unfav'){
+            layer.confirm('确定取消收藏？', function(index){
+                $.post('/favorite/doDel/' + obj.data.id, function(res){
+                    if(res.code == 0){ layer.msg('取消成功', {icon: 1}); table.reload('articleFavTable'); }
+                });
+                layer.close(index);
+            });
+        }
+    });
+
+    // 书籍收藏
+    table.render({
+        elem: '#bookFavTable', url: '/favorite/getMyBookFavorites', method: 'post', page: true,
+        limits: [5, 10, 20], limit: 10,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80},
+            {field: 'title', title: '书籍标题'},
+            {field: 'author', title: '作者', width: 120},
+            {field: 'createTime', title: '收藏时间', width: 170, templet: function(d){
+                return d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : '';
+            }},
+            {title: '操作', width: 120, toolbar: '#bookFavTpl'}
+        ]],
+        request: { pageName: 'page', limitName: 'limit' },
+        parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+    });
+
+    table.on('tool(bookFavTable)', function(obj){
+        if(obj.event === 'unfav'){
+            layer.confirm('确定取消收藏？', function(index){
+                $.post('/favorite/doDel/' + obj.data.id, function(res){
+                    if(res.code == 0){ layer.msg('取消成功', {icon: 1}); table.reload('bookFavTable'); }
+                });
+                layer.close(index);
+            });
+        }
+    });
+
+    // 活动收藏
+    table.render({
+        elem: '#announcementFavTable', url: '/favorite/getMyAnnouncementFavorites', method: 'post', page: true,
+        limits: [5, 10, 20], limit: 10,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80},
+            {field: 'title', title: '活动标题'},
+            {field: 'author', title: '作者', width: 120},
+            {field: 'createTime', title: '收藏时间', width: 170, templet: function(d){
+                return d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : '';
+            }},
+            {title: '操作', width: 120, toolbar: '#announcementFavTpl'}
+        ]],
+        request: { pageName: 'page', limitName: 'limit' },
+        parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+    });
+
+    table.on('tool(announcementFavTable)', function(obj){
+        if(obj.event === 'unfav'){
+            layer.confirm('确定取消收藏？', function(index){
+                $.post('/favorite/doDel/' + obj.data.id, function(res){
+                    if(res.code == 0){ layer.msg('取消成功', {icon: 1}); table.reload('announcementFavTable'); }
+                });
+                layer.close(index);
+            });
+        }
+    });
+
+    // 修改个人信息
+    form.on('submit(updateProfile)', function(data){
+        $.ajax({
+            url: '/user/doUpdateProfile',
+            type: 'POST',
+            data: data.field,
+            success: function(res){
+                if(res.code == 0){
+                    layer.msg('修改成功', {icon: 1});
+                } else {
+                    layer.msg('修改失败', {icon: 2});
+                }
+            }
+        });
+        return false;
+    });
+});
+</script>
+<script type="text/html" id="commentTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+<script type="text/html" id="articleFavTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="unfav">取消收藏</a>
+</script>
+<script type="text/html" id="bookFavTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="unfav">取消收藏</a>
+</script>
+<script type="text/html" id="announcementFavTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="unfav">取消收藏</a>
+</script>
+</body>
+</html>

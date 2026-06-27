@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8"><title>图片管理</title>
+  <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+  <link rel="stylesheet" th:href="@{/layuiadmin/style/admin.css}" media="all">
+  <style>.layui-table-cell .layui-form-checkbox[lay-skin="primary"] { top: 50%; transform: translateY(-50%); }</style>
+</head>
+<body>
+<div class="layui-fluid">
+  <div class="layui-card">
+    <div class="layui-form layui-card-header layuiadmin-card-header-auto">
+      <div class="layui-form-item">
+        <div class="layui-inline"><label class="layui-form-label">图片标题：</label><div class="layui-input-inline"><input type="text" id="search_keyword" placeholder="请输入标题" autocomplete="off" class="layui-input"/></div></div>
+        <div class="layui-inline"><button id="search-submit" class="layui-btn layuiadmin-btn-list"><i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>查询</button></div>
+      </div>
+    </div>
+    <div class="layui-card-body layui-form">
+      <table id="LAY-app-content-list" lay-filter="LAY-app-content-list"></table>
+      <script type="text/html" id="toolbarDemo"><div class="layui-btn-container"><button class="layui-btn layuiadmin-btn-list layui-btn-danger" lay-event="batchdel">批量删除</button><button class="layui-btn layuiadmin-btn-list" lay-event="add">添加</button></div></script>
+      <script type="text/html" id="table-content-list"><a class="layui-btn layui-btn-warm layui-btn-xs" lay-event="edit"><i class="layui-icon layui-icon-edit"></i>编辑</a><a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del"><i class="layui-icon layui-icon-delete"></i>删除</a></script>
+    </div>
+  </div>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+layui.use(['table','layer'],function(){
+    var table=layui.table,layer=layui.layer,$=layui.$;
+    table.render({elem:'#LAY-app-content-list',url:'/image/getPage',method:'post',page:true,limits:[5,10,20,50],limit:10,request:{pageName:'page',limitName:'limit'},toolbar:'#toolbarDemo',cellMinWidth:80,
+        cols:[[{type:'checkbox'},{field:'id',title:'ID',width:80,sort:true},{field:'title',title:'标题',width:200},{field:'author',title:'作者',width:120},{title:'图片',width:120,templet:function(d){return d.cover?'<img src="'+d.cover+'" style="height:40px;"/>':d.imageUrl?'<img src="'+d.imageUrl+'" style="height:40px;"/>':'暂无';}},{field:'viewCount',title:'浏览量',width:100},{field:'createTime',title:'创建时间',width:170,templet:function(d){return d.createTime?d.createTime.substring(0,16).replace('T',' '):'';}},{fixed:'right',title:'操作',toolbar:'#table-content-list',width:150}]]});
+    table.on('toolbar(LAY-app-content-list)',function(obj){
+        if(obj.event=='batchdel'){var c=table.checkStatus('LAY-app-content-list'),l=[];c.data.forEach(function(n){l.push(n.id);});layer.confirm('确认删除选中记录？',{btn:['确定','取消']},function(){$.ajax({type:'post',url:'/image/batchDel',data:{ids:l},success:function(d){if(d.code=='0'){table.reload('LAY-app-content-list');layer.msg('批量删除成功');}else{layer.msg('批量删除失败');}}});});}
+        else if(obj.event=='add'){layer.open({type:2,title:'添加图片',area:['600px','600px'],shade:0.8,content:'/image/toAdd',end:function(){table.reload('LAY-app-content-list');}});}
+    });
+    table.on('tool(LAY-app-content-list)',function(obj){
+        if(obj.event=='edit'){layer.open({type:2,title:'修改图片',area:['600px','600px'],shade:0.8,content:'/image/toEdit/'+obj.data.id,end:function(){table.reload('LAY-app-content-list');}});}
+        else if(obj.event=='del'){layer.confirm('确认删除？',{btn:['确定','取消']},function(){$.ajax({type:'post',url:'/image/doDel/'+obj.data.id,success:function(d){if(d.code=='0'){table.reload('LAY-app-content-list');layer.msg('删除成功');}else{layer.msg('删除失败');}}});});}
+    });
+    $('#search-submit').on('click',function(){table.reload('LAY-app-content-list',{where:{keyword:$('#search_keyword').val()},page:{curr:1}});});
+});
+</script>
+</body>
+</html>

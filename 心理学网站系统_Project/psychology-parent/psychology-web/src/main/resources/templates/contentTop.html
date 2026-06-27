@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<!--顶部导航-->
+<div class="layui-header" th:fragment="top">
+    <div class="layui-logo">心理学网站后台</div>
+    <ul class="layui-nav layui-layout-right">
+        <li class="layui-nav-item">
+            <a href="/toUserIndex" target="_blank"><i class="layui-icon layui-icon-website" style="margin-right: 4px;"></i>访问前台</a>
+        </li>
+        <li class="layui-nav-item">
+            <a href="javascript:;">
+                <span th:if="${session.user != null}">[[${session.user.nickname}]]</span>
+            </a>
+            <dl class="layui-nav-child">
+                <dd><a href="/user/logout">退出登录</a></dd>
+            </dl>
+        </li>
+    </ul>
+</div>
+</body>
+</html>

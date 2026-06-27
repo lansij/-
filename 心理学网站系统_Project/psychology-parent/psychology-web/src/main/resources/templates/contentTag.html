@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+<!--内容区域-->
+<div th:fragment="tag" class="layui-tab layui-tab-brief" lay-filter="demoTab" style="margin: 0;">
+    <ul class="layui-tab-title">
+        <li class="layui-this">欢迎页</li>
+    </ul>
+    <div class="layui-tab-content">
+        <div class="layui-tab-item layui-show">
+            <iframe src="/welcome" frameborder="0" name="right" class="layui-admin-iframe" style="width:100%;height:600px;"></iframe>
+        </div>
+    </div>
+</div>
+</body>
+</html>

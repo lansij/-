@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><title>我的文章收藏</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+</head>
+<body>
+<div style="padding: 20px;">
+    <table id="dataTable" lay-filter="dataTable"></table>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+    layui.use(['table', 'layer'], function(){
+        var table = layui.table; var layer = layui.layer; var $ = layui.$;
+        table.render({
+            elem: '#dataTable', url: '/favorite/getMyArticleFavorites', method: 'post', page: true,
+            limits: [5, 10, 20, 30], limit: 10,
+            cols: [[
+                {field: 'id', title: 'ID', width: 80},
+                {field: 'title', title: '文章标题'},
+                {field: 'author', title: '作者', width: 120},
+                {field: 'createTime', title: '收藏时间', width: 170, templet: function(d){
+                    return d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : '';
+                }},
+                {title: '操作', width: 120, toolbar: '#operateTpl'}
+            ]],
+            request: { pageName: 'page', limitName: 'limit' },
+            parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+        });
+        table.on('tool(dataTable)', function(obj){
+            if(obj.event === 'unfav'){
+                layer.confirm('确定取消收藏？', function(index){
+                    $.post('/favorite/doDel/' + obj.data.id, function(res){
+                        if(res.code == 0){ layer.msg('取消成功'); table.reload('dataTable'); }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+    });
+</script>
+<script th:inline="none" type="text/html" id="operateTpl">
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="unfav">取消收藏</a>
+</script>
+</body>
+</html>

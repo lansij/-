@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"><title>我的评论</title>
+    <link rel="stylesheet" th:href="@{/layuiadmin/layui/css/layui.css}" media="all">
+</head>
+<body>
+<div style="padding: 20px;">
+    <table id="dataTable" lay-filter="dataTable"></table>
+</div>
+<script th:src="@{/layuiadmin/layui/layui.js}"></script>
+<script th:inline="none">
+    layui.use(['table', 'layer'], function(){
+        var table = layui.table; var layer = layui.layer; var $ = layui.$;
+        table.render({
+            elem: '#dataTable', url: '/comment/getMyComments', method: 'post', page: true,
+            limits: [5, 10, 20, 30], limit: 10,
+            cols: [[
+                {field: 'id', title: 'ID', width: 80}, {field: 'targetType', title: '目标类型', width: 100},
+                {field: 'targetId', title: '目标ID', width: 100}, {field: 'content', title: '评论内容'},
+                {title: '操作', width: 160, toolbar: '#operateTpl'}
+            ]],
+            request: { pageName: 'page', limitName: 'limit' },
+            parseData: function(res){ return { code: res.code, msg: res.msg, count: res.count, data: res.data }; }
+        });
+        table.on('tool(dataTable)', function(obj){
+            if(obj.event === 'edit'){
+                layer.prompt({
+                    title: '修改评论内容',
+                    value: obj.data.content,
+                    formType: 2,
+                    area: ['400px', '150px']
+                }, function(value, index){
+                    $.post('/comment/doEdit', {id: obj.data.id, content: value}, function(res){
+                        if(res.code == 0){ layer.msg('修改成功'); table.reload('dataTable'); }
+                        else { layer.msg('修改失败', {icon: 2}); }
+                    });
+                    layer.close(index);
+                });
+            } else if(obj.event === 'del'){
+                layer.confirm('确定删除？', function(index){
+                    $.post('/comment/doDel/' + obj.data.id, function(res){
+                        if(res.code == 0){ layer.msg('删除成功'); table.reload('dataTable'); }
+                    });
+                    layer.close(index);
+                });
+            }
+        });
+    });
+</script>
+<script th:inline="none" type="text/html" id="operateTpl">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        ip: 127.0.0.1
+    gateway:
+      routes:
+        # 用户服务路由
+        - id: psychology-user-service
+          uri: lb://psychology-user-service
+          predicates:
+            - Path=/api/user/**
+
+        # 内容服务路由
+        - id: psychology-content-service
+          uri: lb://psychology-content-service
+          predicates:
+            - Path=/api/content/**
+
+        # 评论服务路由
+        - id: psychology-comment-service
+          uri: lb://psychology-comment-service
+          predicates:
+            - Path=/api/comment/**
+
+        # 收藏服务路由
+        - id: psychology-favorite-service
+          uri: lb://psychology-favorite-service
+          predicates:
+            - Path=/api/favorite/**
+
+        # 前端页面路由（catch-all，放最后）
+        - id: psychology-web
+          uri: lb://psychology-web
+          predicates:
+            - Path=/**
